@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # #### Returns dict = {study_id: {"clinical_note": note, "images": [list of numpy images]}, next study id}. Need to pass in parameter for "train" "test" or "val" into make_dictionary
-
+# from JSON
 # In[2]:
 
 
