@@ -43,7 +43,7 @@ def load_cnn_densenet():
 
 def run_utils(model_name):
     if model_name == "densenet121":
-        model = load_cnn_densenet();
+        model = load_cnn_densenet()
     elif model_name == "chexpert":
         model = load_cnn_chexpert()
     transform = transforms.Compose([

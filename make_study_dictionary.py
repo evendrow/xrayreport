@@ -16,15 +16,15 @@ from PIL import Image
 
 
 def main_make_study_dictionary(train_test_val):
-    with open('annotation.json') as json_file:
+    annotation_directory = os.path.split(os.getcwd())[0]+"/mimic_cxr/annotation.json"
+    with open(annotation_directory) as json_file:
         data = json.load(json_file)
     dictionary = {}
     for study_session in data[train_test_val]:
         study_id = study_session["study_id"]
         if study_id in dictionary.keys():
             for image in study_session["image_path"]:
-                image_dir = str(os.getcwd())+"/images/" + image
-                image_dir = str(image_dir)
+                image_dir = str(os.path.split(os.getcwd())[0]+"/mimic_cxr/images/" + image)
                 if os.path.isfile(image_dir):
                     current_images = dictionary[study_id]["images"]
                     current_images.append(image)
@@ -67,7 +67,7 @@ def main_make_study_dictionary(train_test_val):
         dictionary[study_id]["clinical_note"] = list_of_words_in_report
         dictionary[study_id]["images"] = []
         for image in study_session["image_path"]:
-            image_dir = str(str(os.getcwd())+"/images/" + image)
+            image_dir = str(os.path.split(os.getcwd())[0]+"/mimic_cxr/images/" + image)
             if os.path.isfile(image_dir):
                 current_images = dictionary[study_id]["images"]
                 current_images.append(image)
