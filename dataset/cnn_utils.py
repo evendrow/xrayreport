@@ -10,6 +10,7 @@ import os
 import sys
 import json
 from jsonextended import edict
+from tqdm import tqdm
 
 CHEXPERT_PATH = "Chexpert"
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath("__file__")), CHEXPERT_PATH))
@@ -41,7 +42,7 @@ def load_cnn_densenet():
     return model_for_use
 
 
-def run_utils(model_name):
+def get_cnn(model_name):
     if model_name == "densenet121":
         model = load_cnn_densenet()
     elif model_name == "chexpert":
@@ -71,12 +72,12 @@ def make_image_representation_8_8_1024(data_dir, image, model, transform):
 
 def extract_image_features(data_dir, image_list, model_name):
     matrix_list = []
-    model, transform = run_utils(model_name)
+    model, transform = get_cnn(model_name)
     
     # set model to evaluation mode (to use running value of alpha, gamma in batchnorm)
     model.eval()
 
-    for image in image_list:
+    for image in tqdm(image_list):
         matrix = make_image_representation_8_8_1024(data_dir, image, model, transform)
         matrix_list.append(matrix)
     final_matrix = np.asarray(matrix_list)
@@ -99,4 +100,36 @@ def save_feature_matrix(matrix, image_list, save_path):
     # saving the dataframe  
     df.to_csv(os.path.join(save_path, 'paths.csv'), index=None)
 
+
+def save_annotations(features, clinical_notes, image_list, save_path):
+    '''
+    Saves features and clinical notes annotations
+    - features: List of image features
+    - clinical_notes: list of clinical notes
+
+    NOTE: features and clinical_notes must have the same size (0th dim)
+
+    Saves each feature/note pair to a .npy file as a dictionary
+    {
+        "features":  [features],
+        "note":     [ "<S>", "Ethan", "is", "a", "big", "guy", ...]
+    }
+    '''
+    paths = []
+    for i in tqdm(range(features.shape[0])):
+        new_filename = os.path.basename(image_list[i]) # file.jpg
+        new_filename = os.path.splitext(new_filename)[0]+".npy" # file.npy
+        paths.append(new_filename)
+        new_path = os.path.join(save_path, new_filename)
+        
+        np.save(new_path, {
+            "features": features[i], 
+            "note":    clinical_notes[i]
+        })
+
+    # save paths list to a csv file for reading by the dataset class
+    df = pd.DataFrame({"path": paths})  
+    
+    # saving the dataframe  
+    df.to_csv(os.path.join(save_path, 'paths.csv'), index=None)
 

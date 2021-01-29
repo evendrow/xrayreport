@@ -35,7 +35,10 @@ class ImageFeatureDataset(Dataset):
         # feature name is someothing like "123.npy"
         feature_name = os.path.join(self.root_dir,
                                 self.landmarks_frame.iloc[idx, 0])
-        features = np.load(feature_name)
+        annotation = np.load(feature_name, allow_pickle=True).item()
+        
+        features = annotation["features"]
+        note = annotation["note"]
 
         # Convert to Torch tensor
         features = self.tensorTransform(features)
@@ -49,10 +52,4 @@ class ImageFeatureDataset(Dataset):
         if self.transform:
             features = self.transform(features)
 
-        return features
-
-
-
-
-
-
+        return features, note

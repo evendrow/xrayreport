@@ -5,7 +5,8 @@
 
 
 from load_glove_840B_300d import *
-from make_study_dictionary import *
+# from make_study_dictionary import *
+from dataset.dataset_utils import create_mimic_dictionary
 from load_custom_glove import *
 
 
@@ -13,9 +14,9 @@ from load_custom_glove import *
 
 
 def load_session_dictionary():
-    train_dict = main_make_study_dictionary("train")
-    val_dict = main_make_study_dictionary("val")
-    test_dict = main_make_study_dictionary("test")
+    train_dict = create_mimic_dictionary("train")
+    val_dict = create_mimic_dictionary("val")
+    test_dict = create_mimic_dictionary("test")
     
     return train_dict, val_dict, test_dict
 
