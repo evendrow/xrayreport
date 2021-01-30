@@ -271,8 +271,11 @@ class TransformerDecoderLayer(nn.Module):
 class DecoderEmbeddings(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.word_embeddings = nn.Embedding(
-            config.vocab_size, config.hidden_dim, padding_idx=config.pad_token_id)
+        # exchanging for glove embeddings:
+        self.word_embeddings = nn.Embedding.from_pretrained(config.pre_embed, padding_idx=config.pad_token_id)
+        self.word_embeddings.requires_grad=True
+        #self.word_embeddings = nn.Embedding(
+        #    config.vocab_size, config.hidden_dim, padding_idx=config.pad_token_id)
         self.position_embeddings = nn.Embedding(
             config.max_position_embeddings, config.hidden_dim
         )
