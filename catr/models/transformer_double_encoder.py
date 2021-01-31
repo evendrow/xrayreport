@@ -9,8 +9,8 @@ from torch import nn, Tensor
 
 class Transformer(nn.Module):
 
-    def __init__(self, config, d_model=512, nhead=8, num_encoder_layers=6,
-                 num_decoder_layers=6, dim_feedforward=2048, dropout=0.1, cnn_encoder_type=1,
+    def __init__(self, config, d_model=512, nhead=8, num_encoder_layers=3,
+                 num_decoder_layers=6, dim_feedforward=2048, dropout=0.1, cnn_encoder_type=2,
                  activation="relu", normalize_before=False,
                  return_intermediate_dec=False):
         super().__init__()
@@ -20,7 +20,9 @@ class Transformer(nn.Module):
         encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
         self.encoder = TransformerEncoder(
             encoder_layer, num_encoder_layers, encoder_norm)
-
+        # another block of encoders
+        self.encoder2 = TransformerEncoder(
+            encoder_layer, num_encoder_layers, encoder_norm)
         self.embeddings = DecoderEmbeddings(config)
         decoder_layer = TransformerDecoderLayer(d_model, nhead, dim_feedforward,
                                                 dropout, activation, normalize_before)
@@ -38,19 +40,25 @@ class Transformer(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
-    def forward(self, src, mask, pos_embed, tgt, tgt_mask):
+    def forward(self, src, src2, mask, pos_embed, tgt, tgt_mask):
         # flatten NxCxHxW to HWxNxC
         bs, c, h, w = src.shape
         src = src.flatten(2).permute(2, 0, 1)
         pos_embed = pos_embed.flatten(2).permute(2, 0, 1)
         mask = mask.flatten(1)
-
+        # adding another encoder object for inputting another cnn representation of the Xray
+        src2 = src2.flatten(2).permute(2, 0, 1)
+        ###
         tgt = self.embeddings(tgt).permute(1, 0, 2)
         query_embed = self.embeddings.position_embeddings.weight.unsqueeze(1)
         query_embed = query_embed.repeat(1, bs, 1)
-
         memory = self.encoder(src, src_key_padding_mask=mask, pos=pos_embed)
-        hs = self.decoder(tgt, memory, memory_key_padding_mask=mask, tgt_key_padding_mask=tgt_mask,
+        # adding second encoder and concatenating. 
+        memory2 = self.encoder2(src2, src_key_padding_mask=mask, pos=pos_embed)
+        concat_memory = torch.cat((memory, memory2), dim=2)
+        # elongating mask by concatenating with previous
+        concat_mask = torch.cat((mask, mask), dim=1)
+        hs = self.decoder(tgt, concat_memory, memory_key_padding_mask=concat_mask, tgt_key_padding_mask=tgt_mask,
                           pos=pos_embed, query_pos=query_embed,
                           tgt_mask=generate_square_subsequent_mask(len(tgt)).to(tgt.device))
 
@@ -328,7 +336,7 @@ def generate_square_subsequent_mask(sz):
     return mask
 
 
-def build_transformer(config):
+def build_transformer_double_encoder(config):
     return Transformer(
         config,
         d_model=config.hidden_dim,
