@@ -1,35 +1,51 @@
 # from get_matrix_from_cnn import *
 # from image_feature_dataset import ImageFeatureDataset
 import os
+import json
 from dataset_utils import load_mimic_data
 from cnn_utils import extract_image_features, save_annotations
 
 MIMIC_DIR = "../mimic_cxr"
 EXPORT_DIR = "../mimic_features"
 
-mimic_data = load_mimic_data(fold="val", only_one_image=True, choose_random_scan=False)
+with open('word2ind.json') as json_file: 
+    word2ind = json.load(json_file)
+    unk_token = word2ind["<unk>"]
+
+def tokenize_caption(caption):
+	return [(word2ind[x] if x in word2ind else unk_token) for x in caption]
+
+def create_dataset(fold="val", max_iter=32):
+	mimic_data = load_mimic_data(fold=fold, only_one_image=True, choose_random_scan=False)
 
 
-image_file_list = []
-clinical_notes = []
+	image_file_list = []
+	clinical_notes = []
 
-MAX_ITER = 10
-count = 0
-for image, note in mimic_data.items():
-	image_file_list.append(image)
-	clinical_notes.append(note)
+	count = 0
+	for image, note in mimic_data.items():
+		image_file_list.append(image)
+		clinical_notes.append(tokenize_caption(note))
 
-	count += 1
-	if count >= MAX_ITER:
-		break
+		count += 1
+		if count >= max_iter:
+			break
 
-print("Got", len(image_file_list), "images.")
-print("Extracting image features...")
+	print("Got", len(image_file_list), "images.")
+	print("Extracting image features...")
 
-features = extract_image_features(MIMIC_DIR, image_file_list, "chexpert")
+	features = extract_image_features(MIMIC_DIR, image_file_list, "chexpert")
 
-print("Saving annotations...")
-save_annotations(features, clinical_notes, image_file_list, EXPORT_DIR)
+	print("Saving annotations...")
+	save_path = os.path.join(EXPORT_DIR, fold)
+	save_annotations(features, clinical_notes, image_file_list, save_path)
+
+
+
+if __name__ == "__main__":
+	create_dataset(fold="train", max_iter=128)
+	create_dataset(fold="val", max_iter=32)
+
 
 
 # EXPORT_DIR = "../../mimic_cxr"
