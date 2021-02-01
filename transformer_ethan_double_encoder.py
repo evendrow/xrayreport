@@ -44,6 +44,7 @@ class Xray_Captioner(nn.Module):
         self.input_proj2 = nn.Conv2d(
             feature_dim, hidden_dim, kernel_size=1) # project feature dimension
         self.position_embedding = PositionEmbeddingSine(hidden_dim//2, normalize=True)
+        self.position_embedding2 = PositionEmbeddingSine(hidden_dim//2, normalize=True)
         self.transformer = transformer
         self.mlp = MLP(hidden_dim, 512, vocab_size, 3)
 
@@ -53,17 +54,21 @@ class Xray_Captioner(nn.Module):
         # let the model accept different image sizes. Not needed here.
         b, c, h, w = img_features.shape
         mask = torch.zeros((b, h, w), dtype=torch.bool, device=img_features.device)
+        
+        b, c, h, w = img_features2.shape
+        mask2 = torch.zeros((b, h, w), dtype=torch.bool, device=img_features2.device)
 
         # Get projected image features and positional embedding
         img_embeds = self.input_proj(img_features)
-        # get projected image features for chexpert additionally
-        img_embeds2 = self.input_proj2(img_features2)
-        # reuse image mask
         pos = self.position_embedding(NestedTensor(img_embeds, mask))
         
+        # Get same for second image features as well
+        img_embeds2 = self.input_proj2(img_features2)
+        pos2 = self.position_embedding2(NestedTensor(img_embeds2, mask2))
+        
         # Run through transformer -> linear -> softmax
-        hs = self.transformer(img_embeds, img_embeds2, mask,
-                              pos, target, target_mask)
+        hs = self.transformer(img_embeds, img_embeds2, mask, mask2,
+                              pos, pos2, target, target_mask)
         out = self.mlp(hs.permute(1, 0, 2))
         return out
     

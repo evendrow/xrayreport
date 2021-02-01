@@ -133,3 +133,38 @@ def save_annotations(features, clinical_notes, image_list, save_path):
     # saving the dataframe  
     df.to_csv(os.path.join(save_path, 'paths.csv'), index=None)
 
+def save_annotations_double(features_chexpert, features_imagenet, clinical_notes,
+                            image_list, save_path):
+    '''
+    Saves features and clinical notes annotations
+    - features_chexpert: List of chexpert image features
+    - features_imagenet: List of imagenet-pretrained network image features
+    - clinical_notes: list of clinical notes
+
+    NOTE: features and clinical_notes must have the same size (0th dim)
+
+    Saves each feature/note pair to a .npy file as a dictionary
+    {
+        "features":  [features],
+        "note":     [ "<S>", "Ethan", "is", "a", "big", "guy", ...]
+    }
+    '''
+    paths = []
+    for i in tqdm(range(len(image_list))):
+        new_filename = os.path.basename(image_list[i]) # file.jpg
+        new_filename = os.path.splitext(new_filename)[0]+".npy" # file.npy
+        paths.append(new_filename)
+        new_path = os.path.join(save_path, new_filename)
+        
+        np.save(new_path, {
+            "features_chexpert": features_chexpert[i], 
+            "features_imagenet": features_imagenet[i], 
+            "note":    clinical_notes[i]
+        })
+
+    # save paths list to a csv file for reading by the dataset class
+    df = pd.DataFrame({"path": paths})  
+    
+    # saving the dataframe  
+    df.to_csv(os.path.join(save_path, 'paths.csv'), index=None)
+

@@ -3,10 +3,10 @@
 import os
 import json
 from dataset_utils import load_mimic_data
-from cnn_utils import extract_image_features, save_annotations
+from cnn_utils import extract_image_features, save_annotations, save_annotations_double
 
 MIMIC_DIR = "../mimic_cxr"
-EXPORT_DIR = "../mimic_features"
+EXPORT_DIR = "../mimic_features_double"
 
 with open('word2ind.json') as json_file: 
     word2ind = json.load(json_file)
@@ -34,17 +34,19 @@ def create_dataset(fold="val", max_iter=32):
 	print("Got", len(image_file_list), "images.")
 	print("Extracting image features...")
 
-	features = extract_image_features(MIMIC_DIR, image_file_list, "chexpert")
+	features_chexpert = extract_image_features(MIMIC_DIR, image_file_list, "chexpert")
+	features_imagenet = extract_image_features(MIMIC_DIR, image_file_list, "densenet121")
 
 	print("Saving annotations...")
 	save_path = os.path.join(EXPORT_DIR, fold)
-	save_annotations(features, clinical_notes, image_file_list, save_path)
+	# save_annotations(features_chexpert, clinical_notes, image_file_list, save_path)
+	save_annotations_double(features_chexpert, features_imagenet, clinical_notes, image_file_list, save_path)
 
 
 
 if __name__ == "__main__":
-	create_dataset(fold="train", max_iter=128)
-	create_dataset(fold="val", max_iter=32)
+	create_dataset(fold="train", max_iter=32)
+	create_dataset(fold="val", max_iter=8)
 
 
 

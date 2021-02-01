@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 
 class ImageFeatureDataset(Dataset):
-    """Face Landmarks dataset."""
+    """Single Image Feature dataset."""
 
     def __init__(self, config, mode='train', transform=None, pooling=None, kernel_size=2):
         """
@@ -34,19 +34,23 @@ class ImageFeatureDataset(Dataset):
         
 
     def __len__(self):
-        return len(self.landmarks_frame)
+        return 128#len(self.landmarks_frame)
+
+    def get_annotation_features_list(self, annotation):
+        return [annotation["features"]]
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
+
+        idx = 0
 
         # feature name is someothing like "123.npy"
         feature_name = os.path.join(self.root_dir,
                                 self.landmarks_frame.iloc[idx, 0])
         annotation = np.load(feature_name, allow_pickle=True).item()
         
-        features = annotation["features"]
-        features_mask = torch.zeros(features.shape[1], features.shape[2])
+        features_list = self.get_annotation_features_list(annotation)
 
         note = torch.tensor(annotation["note"])
         note = note[:min(len(note), self.max_length+1)]
@@ -59,16 +63,31 @@ class ImageFeatureDataset(Dataset):
         note_mask[0:note_size] = 0
         note_mask = note_mask.bool()
 
-        # Convert to Torch tensor
-        features = self.tensorTransform(features)
+        # Convert each feature type into Tensor, and pool as needed
+        for i in range(len(features_list)):
+            features_list[i] = self.tensorTransform(features_list[i])
 
-        if self.pooling == "max":
-            features = nn.MaxPool2d(kernel_size, stride=kernel_size)(features)
-        elif self.pooling == "avg":
-            features = nn.AvgPool2d(kernel_size, stride=kernel_size)(features)
+            if self.pooling == "max":
+                features_list[i] = nn.MaxPool2d(kernel_size, stride=kernel_size)(features_list[i])
+            elif self.pooling == "avg":
+                features_list[i] = nn.AvgPool2d(kernel_size, stride=kernel_size)(features_list[i])
 
-        # Apply any given transforms
-        if self.transform:
-            features = self.transform(features)
+            # Apply any given transforms
+            if self.transform:
+                features_list[i] = self.transform(features_list[i])
 
-        return features, features_mask, note_padded, note_mask
+        # If only one feature (e.g. just chexpert), just return that
+        if len(features_list) == 1:
+            features_list = features_list[0]
+
+        return features_list, note_padded, note_mask
+
+
+# All we need to do is override which features we get
+class ImageDoubleFeatureDataset(ImageFeatureDataset):
+    def get_annotation_features_list(self, annotation):
+        return [annotation["features_chexpert"], annotation["features_imagenet"]]
+
+
+
+
