@@ -63,16 +63,16 @@ def make_image_representation_8_8_1024(data_dir, images, model, transform):
     for image_path in images:
         image_dir = os.path.join(data_dir, "images/", image_path)
         image = Image.open(image_dir)
-        image = transform(image)
+        image = transform(image).cuda()
         image_tensor.append(image.unsqueeze(0))
 
     # Run image through CNN
-    image_batch = torch.cat(image_tensor) #image.unsqueeze(0)
+    image_batch = torch.cat(image_tensor).cuda() #image.unsqueeze(0)
     # print("Tensor size: ", image_batch.shape)
     
     extracted_features = model(image_batch)
 
-    np_features = extracted_features.detach().numpy()
+    np_features = extracted_features.detach().cpu().numpy()
     # np_features = np_features.squeeze().transpose((1, 2, 0))
     np_features = np_features.squeeze().transpose((0, 2, 3, 1))
 
@@ -85,15 +85,16 @@ def extract_image_features(data_dir, image_list, model_name):
     
     # set model to evaluation mode (to use running value of alpha, gamma in batchnorm)
     model.eval()
-
+    model.cuda()
     with torch.no_grad():
-        batch_size = 16
+        batch_size = 64
         for i in tqdm(range(0, len(image_list), batch_size)):
-            images = image_list[i:min(i+8,len(image_list))]
+            images = image_list[i:min(i+batch_size,len(image_list))]
             matrix = make_image_representation_8_8_1024(data_dir, images, model, transform)
             matrix_list.append(matrix)
     # final_matrix = np.asarray(matrix_list)
     final_matrix = np.concatenate(matrix_list, axis=0)
+    print("final matrix size: ", final_matrix.shape)
 
     return final_matrix
 
