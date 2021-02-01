@@ -31,6 +31,8 @@ def load_cnn_chexpert():
     last_layer = list(modules[0].children())[:-1]
     model_for_use = nn.Sequential(*last_layer)
 
+    model.eval()
+
     return model_for_use
 
 
@@ -55,17 +57,24 @@ def get_cnn(model_name):
     return model, transform
 
 
-def make_image_representation_8_8_1024(data_dir, image, model, transform):
+def make_image_representation_8_8_1024(data_dir, images, model, transform):
     # Get image
-    image_dir = os.path.join(data_dir, "images/", image)
-    image = Image.open(image_dir)
-    image = transform(image)
+    image_tensor = []
+    for image_path in images:
+        image_dir = os.path.join(data_dir, "images/", image_path)
+        image = Image.open(image_dir)
+        image = transform(image)
+        image_tensor.append(image.unsqueeze(0))
 
     # Run image through CNN
-    image_batch = image.unsqueeze(0)
+    image_batch = torch.cat(image_tensor) #image.unsqueeze(0)
+    # print("Tensor size: ", image_batch.shape)
+    
     extracted_features = model(image_batch)
+
     np_features = extracted_features.detach().numpy()
-    np_features = np_features.squeeze().transpose((1, 2, 0))
+    # np_features = np_features.squeeze().transpose((1, 2, 0))
+    np_features = np_features.squeeze().transpose((0, 2, 3, 1))
 
     return np_features
 
@@ -77,10 +86,14 @@ def extract_image_features(data_dir, image_list, model_name):
     # set model to evaluation mode (to use running value of alpha, gamma in batchnorm)
     model.eval()
 
-    for image in tqdm(image_list):
-        matrix = make_image_representation_8_8_1024(data_dir, image, model, transform)
-        matrix_list.append(matrix)
-    final_matrix = np.asarray(matrix_list)
+    with torch.no_grad():
+        batch_size = 16
+        for i in tqdm(range(0, len(image_list), batch_size)):
+            images = image_list[i:min(i+8,len(image_list))]
+            matrix = make_image_representation_8_8_1024(data_dir, images, model, transform)
+            matrix_list.append(matrix)
+    # final_matrix = np.asarray(matrix_list)
+    final_matrix = np.concatenate(matrix_list, axis=0)
 
     return final_matrix
 

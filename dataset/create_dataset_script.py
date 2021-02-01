@@ -16,7 +16,7 @@ def tokenize_caption(caption):
 	return [(word2ind[x] if x in word2ind else unk_token) for x in caption]
 
 def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
-	mimic_data = load_mimic_data(fold=fold, only_one_image=True, choose_random_scan=False)
+	mimic_data = load_mimic_data(fold=fold, only_one_image=True, choose_random_scan=True)
 
 
 	image_file_list = []
