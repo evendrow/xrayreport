@@ -53,12 +53,15 @@ def evaluate_double_encoder(model, criterion, data_loader, device):
     total = len(data_loader)
 
     with tqdm.tqdm(total=total) as pbar:
-        for images, images2, masks, caps, cap_masks in data_loader:
+        for image_features, caps, cap_masks in data_loader:
             # samples = utils.NestedTensor(images, masks).to(device)
             caps = caps.to(device)
             cap_masks = cap_masks.to(device)
+            
+            images_chexpert = image_features[0]
+            images_imagenet = image_features[1]
 
-            outputs = model(images, images2, caps[:, :-1], cap_masks[:, :-1])
+            outputs = model(images_chexpert, images_imagenet, caps[:, :-1], cap_masks[:, :-1])
             loss = criterion(outputs.permute(0, 2, 1), caps[:, 1:])
 
             validation_loss += loss.item()
