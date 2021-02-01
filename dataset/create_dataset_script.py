@@ -15,7 +15,7 @@ with open('word2ind.json') as json_file:
 def tokenize_caption(caption):
 	return [(word2ind[x] if x in word2ind else unk_token) for x in caption]
 
-def create_dataset(fold="val", max_iter=32):
+def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
 	mimic_data = load_mimic_data(fold=fold, only_one_image=True, choose_random_scan=False)
 
 
@@ -34,19 +34,24 @@ def create_dataset(fold="val", max_iter=32):
 	print("Got", len(image_file_list), "images.")
 	print("Extracting image features...")
 
-	features_chexpert = extract_image_features(MIMIC_DIR, image_file_list, "chexpert")
-	features_imagenet = extract_image_features(MIMIC_DIR, image_file_list, "densenet121")
+	features_list = []
+	for f in features:
+		print(f)
+		features_list.append(extract_image_features(MIMIC_DIR, image_file_list, f))
 
 	print("Saving annotations...")
 	save_path = os.path.join(EXPORT_DIR, fold)
-	# save_annotations(features_chexpert, clinical_notes, image_file_list, save_path)
-	save_annotations_double(features_chexpert, features_imagenet, clinical_notes, image_file_list, save_path)
+
+	if len(features) == 1:
+		save_annotations(features_list[0], clinical_notes, image_file_list, save_path)
+	else:
+		save_annotations_double(features_list[0], features_list[1], clinical_notes, image_file_list, save_path)
 
 
 
 if __name__ == "__main__":
-	create_dataset(fold="train", max_iter=32)
-	create_dataset(fold="val", max_iter=8)
+	create_dataset(fold="train", max_iter=32, features=["chexpert", "densenet121"])
+	create_dataset(fold="val", max_iter=8, features=["chexpert", "densenet121"])
 
 
 
