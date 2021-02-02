@@ -3,55 +3,64 @@
 import os
 import json
 from dataset_utils import load_mimic_data
-from cnn_utils import extract_image_features, save_annotations, save_annotations_double
+from cnn_utils import get_cnn, extract_image_features, save_annotations, save_annotations_double
+from tqdm import tqdm
 
 MIMIC_DIR = "../mimic_cxr"
 EXPORT_DIR = "../mimic_features_double"
+BATCH_SIZE=64
 
 with open('word2ind.json') as json_file: 
     word2ind = json.load(json_file)
     unk_token = word2ind["<unk>"]
 
 def tokenize_caption(caption):
-	return [(word2ind[x] if x in word2ind else unk_token) for x in caption]
+    return [(word2ind[x] if x in word2ind else unk_token) for x in caption]
 
 def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
-	mimic_data = load_mimic_data(fold=fold, only_one_image=True, choose_random_scan=True)
+    mimic_data = load_mimic_data(fold=fold, only_one_image=True, choose_random_scan=True)
 
 
-	image_file_list = []
-	clinical_notes = []
+    image_file_list = []
+    clinical_notes = []
 
-	count = 0
-	for image, note in mimic_data.items():
-		image_file_list.append(image)
-		clinical_notes.append(tokenize_caption(note))
+    count = 0
+    for image, note in mimic_data.items():
+        image_file_list.append(image)
+        clinical_notes.append(tokenize_caption(note))
 
-		count += 1
-		if count >= max_iter:
-			break
+        count += 1
+        if count >= max_iter:
+            break
 
-	print("Got", len(image_file_list), "images.")
-	print("Extracting image features...")
+    print("Got", len(image_file_list), "images.")
+    print("Extracting and saving image features...")
 
-	features_list = []
-	for f in features:
-		print(f)
-		features_list.append(extract_image_features(MIMIC_DIR, image_file_list, f))
 
-	print("Saving annotations...")
-	save_path = os.path.join(EXPORT_DIR, fold)
+    save_path = os.path.join(EXPORT_DIR, fold)
 
-	if len(features) == 1:
-		save_annotations(features_list[0], clinical_notes, image_file_list, save_path)
-	else:
-		save_annotations_double(features_list[0], features_list[1], clinical_notes, image_file_list, save_path)
+    model_dict = { model_name: get_cnn(model_name) for model_name in features } 
+
+    for i in tqdm(range(0, len(image_file_list), BATCH_SIZE)):
+        images = image_file_list[i:min(i+BATCH_SIZE,len(image_file_list))]
+        
+        features_list = []
+        for f in features:
+            features_list.append(extract_image_features(MIMIC_DIR, images, model_dict[f][0], model_dict[f][1]))
+
+        if len(features) == 1:
+            save_annotations(features_list[0], clinical_notes, image_file_list, save_path)
+        else:
+            save_annotations_double(features_list[0], features_list[1], clinical_notes, image_file_list, save_path)
+
+
+    save_feature_csv(image_list, save_path)
 
 
 
 if __name__ == "__main__":
-	create_dataset(fold="train", max_iter=1024, features=["chexpert", "densenet121"])
-	create_dataset(fold="val", max_iter=1024, features=["chexpert", "densenet121"])
+    create_dataset(fold="train", max_iter=1024, features=["chexpert", "densenet121"])
+    create_dataset(fold="val", max_iter=1024, features=["chexpert", "densenet121"])
 
 
 

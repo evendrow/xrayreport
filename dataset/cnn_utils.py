@@ -79,27 +79,29 @@ def make_image_representation_8_8_1024(data_dir, images, model, transform):
     return np_features
 
 
-def extract_image_features(data_dir, image_list, model_name):
+def extract_image_features(data_dir, image_list, model, transform):
     matrix_list = []
-    model, transform = get_cnn(model_name)
     
     # set model to evaluation mode (to use running value of alpha, gamma in batchnorm)
     model.eval()
     model.cuda()
     with torch.no_grad():
-        batch_size = 64
-        for i in tqdm(range(0, len(image_list), batch_size)):
-            images = image_list[i:min(i+batch_size,len(image_list))]
-            matrix = make_image_representation_8_8_1024(data_dir, images, model, transform)
-            matrix_list.append(matrix)
+        matrix = make_image_representation_8_8_1024(data_dir, image_list, model, transform)
+        matrix_list.append(matrix)
     # final_matrix = np.asarray(matrix_list)
     final_matrix = np.concatenate(matrix_list, axis=0)
     print("final matrix size: ", final_matrix.shape)
 
     return final_matrix
 
+def save_feature_csv(image_list, save_path):
+    # save paths list to a csv file for reading by the dataset class
+    df = pd.DataFrame({"path": paths})  
 
-def save_feature_matrix(matrix, image_list, save_path):
+    # saving the dataframe  
+    df.to_csv(os.path.join(save_path, 'paths.csv'), index=None)
+
+def save_feature_matrix(matrix, image_list, save_path, save_csv=False):
     paths = []
     for i in range(matrix.shape[0]):
         new_filename = os.path.basename(image_list[i]) # file.jpg
@@ -107,13 +109,6 @@ def save_feature_matrix(matrix, image_list, save_path):
         paths.append(new_filename)
         new_path = os.path.join(save_path, new_filename)
         np.save(new_path, matrix[i])
-
-    # save paths list to a csv file for reading by the dataset class
-    df = pd.DataFrame({"path": paths})  
-    
-    # saving the dataframe  
-    df.to_csv(os.path.join(save_path, 'paths.csv'), index=None)
-
 
 def save_annotations(features, clinical_notes, image_list, save_path):
     '''
@@ -175,10 +170,4 @@ def save_annotations_double(features_chexpert, features_imagenet, clinical_notes
             "features_imagenet": features_imagenet[i], 
             "note":    clinical_notes[i]
         })
-
-    # save paths list to a csv file for reading by the dataset class
-    df = pd.DataFrame({"path": paths})  
-    
-    # saving the dataframe  
-    df.to_csv(os.path.join(save_path, 'paths.csv'), index=None)
 
