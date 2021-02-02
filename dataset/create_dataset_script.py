@@ -7,7 +7,7 @@ from cnn_utils import get_cnn, extract_image_features, save_annotations, save_an
 from tqdm import tqdm
 
 MIMIC_DIR = "../mimic_cxr"
-EXPORT_DIR = "../mimic_features_double"
+EXPORT_DIR = "../mimic_features"
 BATCH_SIZE=64
 
 with open('word2ind.json') as json_file: 
@@ -44,15 +44,16 @@ def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
 
     for i in tqdm(range(0, len(image_file_list), BATCH_SIZE)):
         images = image_file_list[i:min(i+BATCH_SIZE,len(image_file_list))]
+        notes = clinical_notes[i:min(i+BATCH_SIZE,len(clinical_notes))]
         
         features_list = []
         for f in features:
             features_list.append(extract_image_features(MIMIC_DIR, images, model_dict[f][0], model_dict[f][1]))
 
         if len(features) == 1:
-            save_annotations(features_list[0], clinical_notes, images, save_path)
+            save_annotations(features_list[0], notes, images, save_path)
         else:
-            save_annotations_double(features_list[0], features_list[1], clinical_notes, images, save_path)
+            save_annotations_double(features_list[0], features_list[1], notes, images, save_path)
 
 
     save_feature_csv(image_file_list, save_path)
@@ -60,8 +61,8 @@ def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
 
 
 if __name__ == "__main__":
-    create_dataset(fold="train", max_iter=128, features=["chexpert", "densenet121"])
-    create_dataset(fold="val", max_iter=128, features=["chexpert", "densenet121"])
+    create_dataset(fold="train", max_iter=128, features=[ "densenet121"])
+    create_dataset(fold="val", max_iter=128, features=["densenet121"])
 
 
 
