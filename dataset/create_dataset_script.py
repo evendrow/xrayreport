@@ -50,8 +50,8 @@ def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
 
 
 if __name__ == "__main__":
-	create_dataset(fold="train", max_iter=32, features=["chexpert", "densenet121"])
-	create_dataset(fold="val", max_iter=8, features=["chexpert", "densenet121"])
+	create_dataset(fold="train", max_iter=1024, features=["chexpert", "densenet121"])
+	create_dataset(fold="val", max_iter=1024, features=["chexpert", "densenet121"])
 
 
 
