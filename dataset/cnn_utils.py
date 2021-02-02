@@ -63,13 +63,18 @@ def make_image_representation_8_8_1024(data_dir, images, model, transform):
     for image_path in images:
         image_dir = os.path.join(data_dir, "images/", image_path)
         image = Image.open(image_dir)
-        image = transform(image).cuda()
+        image = transform(image)
+        #if torch.cuda.is_available():
+        #    image = image.cuda()
         image_tensor.append(image.unsqueeze(0))
 
     # Run image through CNN
-    image_batch = torch.cat(image_tensor).cuda() #image.unsqueeze(0)
+    image_batch = torch.cat(image_tensor) #image.unsqueeze(0)
     # print("Tensor size: ", image_batch.shape)
     
+    if torch.cuda.is_available():
+        image_batch = image_batch.cuda()
+
     extracted_features = model(image_batch)
 
     np_features = extracted_features.detach().cpu().numpy()
@@ -84,17 +89,18 @@ def extract_image_features(data_dir, image_list, model, transform):
     
     # set model to evaluation mode (to use running value of alpha, gamma in batchnorm)
     model.eval()
-    model.cuda()
+
+    if torch.cuda.is_available():
+        model.cuda()
     with torch.no_grad():
         matrix = make_image_representation_8_8_1024(data_dir, image_list, model, transform)
         matrix_list.append(matrix)
     # final_matrix = np.asarray(matrix_list)
     final_matrix = np.concatenate(matrix_list, axis=0)
-    print("final matrix size: ", final_matrix.shape)
 
     return final_matrix
 
-def save_feature_csv(image_list, save_path):
+def save_feature_csv(paths, save_path):
     # save paths list to a csv file for reading by the dataset class
     df = pd.DataFrame({"path": paths})  
 
@@ -125,7 +131,7 @@ def save_annotations(features, clinical_notes, image_list, save_path):
     }
     '''
     paths = []
-    for i in tqdm(range(features.shape[0])):
+    for i in range(features.shape[0]):
         new_filename = os.path.basename(image_list[i]) # file.jpg
         new_filename = os.path.splitext(new_filename)[0]+".npy" # file.npy
         paths.append(new_filename)
@@ -159,7 +165,7 @@ def save_annotations_double(features_chexpert, features_imagenet, clinical_notes
     }
     '''
     paths = []
-    for i in tqdm(range(len(image_list))):
+    for i in range(len(image_list)):
         new_filename = os.path.basename(image_list[i]) # file.jpg
         new_filename = os.path.splitext(new_filename)[0]+".npy" # file.npy
         paths.append(new_filename)

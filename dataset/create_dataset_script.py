@@ -3,7 +3,7 @@
 import os
 import json
 from dataset_utils import load_mimic_data
-from cnn_utils import get_cnn, extract_image_features, save_annotations, save_annotations_double
+from cnn_utils import get_cnn, extract_image_features, save_annotations, save_annotations_double, save_feature_csv
 from tqdm import tqdm
 
 MIMIC_DIR = "../mimic_cxr"
@@ -18,7 +18,8 @@ def tokenize_caption(caption):
     return [(word2ind[x] if x in word2ind else unk_token) for x in caption]
 
 def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
-    mimic_data = load_mimic_data(fold=fold, only_one_image=True, choose_random_scan=True)
+    print("Loading mimic data...")
+    mimic_data = load_mimic_data(fold=fold, only_one_image=False, choose_random_scan=True)
 
 
     image_file_list = []
@@ -49,18 +50,18 @@ def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
             features_list.append(extract_image_features(MIMIC_DIR, images, model_dict[f][0], model_dict[f][1]))
 
         if len(features) == 1:
-            save_annotations(features_list[0], clinical_notes, image_file_list, save_path)
+            save_annotations(features_list[0], clinical_notes, images, save_path)
         else:
-            save_annotations_double(features_list[0], features_list[1], clinical_notes, image_file_list, save_path)
+            save_annotations_double(features_list[0], features_list[1], clinical_notes, images, save_path)
 
 
-    save_feature_csv(image_list, save_path)
+    save_feature_csv(image_file_list, save_path)
 
 
 
 if __name__ == "__main__":
-    create_dataset(fold="train", max_iter=1024, features=["chexpert", "densenet121"])
-    create_dataset(fold="val", max_iter=1024, features=["chexpert", "densenet121"])
+    create_dataset(fold="train", max_iter=128, features=["chexpert", "densenet121"])
+    create_dataset(fold="val", max_iter=128, features=["chexpert", "densenet121"])
 
 
 
