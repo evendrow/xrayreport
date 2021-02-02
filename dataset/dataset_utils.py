@@ -126,6 +126,7 @@ def load_mimic_data(fold="train", only_one_image=True, choose_random_scan=False)
                 new_dict[image] = clinical_note
     else:
         for session in dictionary.keys():
+            clinical_note = dictionary[session]["clinical_note"]
             all_images = dictionary[session]["images"]
             for image in all_images:
                 if image not in new_dict.keys():
