@@ -34,16 +34,16 @@ class ImageFeatureDataset(Dataset):
         
 
     def __len__(self):
-        return 128#len(self.landmarks_frame)
+        return len(self.landmarks_frame)
 
     def get_annotation_features_list(self, annotation):
-        return [annotation["features"]]
+        return [annotation["features_imagenet"]]
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        idx = 0
+        #idx = 0
 
         # feature name is someothing like "123.npy"
         feature_name = os.path.join(self.root_dir,

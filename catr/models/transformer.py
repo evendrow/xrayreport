@@ -240,8 +240,8 @@ class TransformerDecoderLayer(nn.Module):
                     query_pos: Optional[Tensor] = None):
         tgt2 = self.norm1(tgt)
         q = k = self.with_pos_embed(tgt2, query_pos)
-        tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask,
-                              key_padding_mask=tgt_key_padding_mask)[0]
+        tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask.to("cuda"),
+                              key_padding_mask=tgt_key_padding_mask.to("cuda"))[0]
         tgt = tgt + self.dropout1(tgt2)
         tgt2 = self.norm2(tgt)
         tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt2, query_pos),
@@ -271,6 +271,7 @@ class TransformerDecoderLayer(nn.Module):
 class DecoderEmbeddings(nn.Module):
     def __init__(self, config):
         super().__init__()
+        self.config = config
         # exchanging for glove embeddings:
         self.word_embeddings = nn.Embedding.from_pretrained(config.pre_embed, padding_idx=config.pad_token_id)
         self.word_embeddings.requires_grad=True
@@ -293,8 +294,8 @@ class DecoderEmbeddings(nn.Module):
             seq_length, dtype=torch.long, device=device)
         position_ids = position_ids.unsqueeze(0).expand(input_shape)
 
-        input_embeds = self.word_embeddings(x)
-        position_embeds = self.position_embeddings(position_ids)
+        input_embeds = self.word_embeddings(x.to(self.config.device))
+        position_embeds = self.position_embeddings(position_ids.to(self.config.device))
 
         embeddings = input_embeds + position_embeds
         embeddings = self.LayerNorm(embeddings)

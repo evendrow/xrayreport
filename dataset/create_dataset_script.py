@@ -7,7 +7,7 @@ from cnn_utils import get_cnn, extract_image_features, save_annotations, save_an
 from tqdm import tqdm
 
 MIMIC_DIR = "../mimic_cxr"
-EXPORT_DIR = "../mimic_features"
+EXPORT_DIR = "../mimic_features_double"
 BATCH_SIZE=64
 
 with open('word2ind.json') as json_file: 
@@ -19,7 +19,7 @@ def tokenize_caption(caption):
 
 def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
     print("Loading mimic data...")
-    mimic_data = load_mimic_data(fold=fold, only_one_image=False, choose_random_scan=True)
+    mimic_data = load_mimic_data(fold=fold, only_one_image=True, choose_random_scan=True)
 
 
     image_file_list = []
@@ -61,8 +61,8 @@ def create_dataset(fold="val", max_iter=32, features=["densenet121"]):
 
 
 if __name__ == "__main__":
-    create_dataset(fold="train", max_iter=128, features=[ "densenet121"])
-    create_dataset(fold="val", max_iter=128, features=["densenet121"])
+    #create_dataset(fold="train", max_iter=12800000, features=["chexpert", "densenet121"])
+    create_dataset(fold="val", max_iter=12800000, features=["chexpert", "densenet121"])
 
 
 
