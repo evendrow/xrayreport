@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import os
+import re
 import random
 
 from PIL import Image
@@ -45,7 +46,11 @@ def create_mimic_dictionary(fold="train"):
         clinical_report = study_session["report"]
         for line in clinical_report.splitlines():
             for word in line.split():
-                if "." in word:
+                if re.search("^[0-9]?[0-9]:[0-9][0-9]$", word): 
+                    list_of_words_in_report.append("<TIME>")
+                elif re.search("^(([0-9]){2}-([0-9]){2}-([0-9]){4})|^(([0-9]){4}-([0-9]){2}-([0-9]){2})$", word): 
+                    list_of_words_in_report.append("<DATE>")
+                elif "." in word:
                     if word[-1]==".":
                         list_of_words_in_report.append(word[:-1])
                         list_of_words_in_report.append(".")

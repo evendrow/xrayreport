@@ -98,14 +98,27 @@ def add_domain_words(glove_dict):
     for word in top_ten_similar(glove_dict, "lungs"):
         bibasilar_vector += glove_dict[word[0]]
     bibasilar_vector = bibasilar_vector / 10
+    
+    time_vector = np.zeros(glove_dict["<s>"].shape)
+    for word in top_ten_similar(glove_dict, "time"):
+        time_vector += glove_dict[word[0]]
+    time_vector = time_vector / 10
+    
+    date_vector = np.zeros(glove_dict["<s>"].shape)
+    for word in top_ten_similar(glove_dict, "date"):
+        date_vector += glove_dict[word[0]]
+    date_vector = date_vector / 10
+    
 
-    added_words_to_glove = ["<unk>", "cardiomediastinal", "AP", "PA", "retrocardial", "bibasilar"]
+    added_words_to_glove = ["<unk>", "cardiomediastinal", "AP", "PA", "retrocardial", "bibasilar", "<TIME>", "<DATE>"]
     glove_dict["<unk>"] = average_vector
     glove_dict["cardiomediastinal"] = cardiomediastinal_vector
     glove_dict["AP"] = ap_pa_vector
     glove_dict["PA"] = ap_pa_vector +0.001
     glove_dict["retrocardiac"] = retrocardiac_vector
     glove_dict["bibasilar"] = bibasilar_vector
+    glove_dict["<TIME>"] = time_vector
+    glove_dict["<DATE>"] = date_vector
     
     return glove_dict
 
