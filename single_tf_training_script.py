@@ -104,13 +104,13 @@ def make_and_load_model():
     print(f"Train: {len(dataset_train)}")
     print(f"Val: {len(dataset_val)}")
     if os.path.exists(config.checkpoint):
-      print("Loading Checkpoint...")
-    global checkpoint
-      checkpoint = torch.load(config.checkpoint)#, map_location='cuda')
-      model.load_state_dict(checkpoint['model'])
-      optimizer.load_state_dict(checkpoint['optimizer'])
-      lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-      config.start_epoch = checkpoint['epoch'] + 1
+        print("Loading Checkpoint...")
+        global checkpoint
+        checkpoint = torch.load(config.checkpoint)#, map_location='cuda')
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
+        config.start_epoch = checkpoint['epoch'] + 1
 
     print("Start Training..")
 
@@ -118,7 +118,7 @@ def make_and_load_model():
 # In[ ]:
 
 
-def main():
+def my_main():
     make_config()
     print(f"Setup config with device {config.device}")
     make_and_load_model()
@@ -158,5 +158,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    my_main()
 
