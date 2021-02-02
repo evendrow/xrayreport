@@ -100,7 +100,14 @@ def extract_image_features(data_dir, image_list, model, transform):
 
     return final_matrix
 
-def save_feature_csv(paths, save_path):
+def save_feature_csv(image_list, save_path):
+
+    paths = []
+    for i in range(len(image_list)):
+        new_filename = os.path.basename(image_list[i]) # file.jpg
+        new_filename = os.path.splitext(new_filename)[0]+".npy" # file.npy
+        paths.append(new_filename)
+
     # save paths list to a csv file for reading by the dataset class
     df = pd.DataFrame({"path": paths})  
 
