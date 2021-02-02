@@ -37,12 +37,16 @@ from engine import train_one_epoch, evaluate
 
 # set up config
 def make_config():
-    global words = np.load("glove_embed.npy")
+    global words
+    words = np.load("glove_embed.npy")
     with open('word2ind.json') as json_file: 
-        global word2ind = json.load(json_file) 
+        global word2ind
+        word2ind = json.load(json_file) 
     with open('ind2word.json') as json_file: 
-        global ind2word = json.load(json_file) 
-    global config = Config()
+        global ind2word
+        ind2word = json.load(json_file) 
+    global config
+    config = Config()
     config.feature_dim = 1024
     config.pad_token_id = word2ind["<S>"]
     config.hidden_dim = 300
@@ -59,11 +63,15 @@ def make_config():
 
 
 def make_and_load_model():
-    global model, criterion = main(config)
+    global model
+    global criterion
+    model, criterion = main(config)
     model = model.float()
-    global device = torch.device(config.device)
+    global device
+    device = torch.device(config.device)
     model.to(device)
-    global param_dicts = [
+    global param_dicts
+    param_dicts = [
         {"params": [p for n, p in model.named_parameters(
         ) if "backbone" not in n and p.requires_grad]},
         {
@@ -71,27 +79,34 @@ def make_and_load_model():
             "lr": config.lr_backbone,
         },
     ]
-    global optimizer = torch.optim.AdamW(
+    global optimizer
+    optimizer = torch.optim.AdamW(
         param_dicts, lr=config.lr, weight_decay=config.weight_decay)
-    global lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, config.lr_drop)
-    global dataset_train = ImageFeatureDataset(config, mode='train')
-    global dataset_val = ImageFeatureDataset(config, mode='val')
-
-    global sampler_train = torch.utils.data.RandomSampler(dataset_train)
-    global sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-
-    global batch_sampler_train = torch.utils.data.BatchSampler(
+    global lr_scheduler
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, config.lr_drop)
+    global dataset_train
+    dataset_train = ImageFeatureDataset(config, mode='train')
+    global dataset_val
+    dataset_val = ImageFeatureDataset(config, mode='val')
+    global sampler_train
+    sampler_train = torch.utils.data.RandomSampler(dataset_train)
+    global sampler_val
+    sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+    global batch_sampler_train
+    batch_sampler_train = torch.utils.data.BatchSampler(
             sampler_train, config.batch_size, drop_last=True)
-
-    global data_loader_train = DataLoader(
+    global data_loader_train
+    data_loader_train = DataLoader(
             dataset_train, batch_sampler=batch_sampler_train, num_workers=config.num_workers)
-    global data_loader_val = DataLoader(dataset_val, config.batch_size,
+    global data_loader_val
+    data_loader_val = DataLoader(dataset_val, config.batch_size,
                                  sampler=sampler_val, drop_last=False, num_workers=config.num_workers)
     print(f"Train: {len(dataset_train)}")
     print(f"Val: {len(dataset_val)}")
     if os.path.exists(config.checkpoint):
       print("Loading Checkpoint...")
-      global checkpoint = torch.load(config.checkpoint)#, map_location='cuda')
+    global checkpoint
+      checkpoint = torch.load(config.checkpoint)#, map_location='cuda')
       model.load_state_dict(checkpoint['model'])
       optimizer.load_state_dict(checkpoint['optimizer'])
       lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
