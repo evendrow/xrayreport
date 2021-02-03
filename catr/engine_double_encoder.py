@@ -37,15 +37,15 @@ def train_one_epoch_double_encoder(model, criterion, data_loader,
             caps = caps.to(device)
             cap_masks = cap_masks.to(device)
             
-            images_chexpert = image_features[0]
-            images_imagenet = image_features[1]
+            images_chexpert = image_features[0].to(device)
+            images_imagenet = image_features[1].to(device)
     
             outputs = model(images_chexpert, images_imagenet, caps[:, :-1], cap_masks[:, :-1])
             # getting average bleu score of iteration
             if iteration_number <= bleu_score_iteration_cutoff:
-                outputs_pred = torch.argmax(outputs, dim=2)
+                outputs_pred = torch.argmax(outputs, dim=2).cpu()
                 all_outputs = outputs_pred.numpy()
-                modified_caps = caps[:,:-1]
+                modified_caps = caps[:,:-1].cpu()
                 all_modified_caps = modified_caps.numpy()
                 all_outputs_corrected = []
                 for report in all_outputs:
@@ -100,9 +100,9 @@ def evaluate_double_encoder(model, criterion, data_loader, device, word2ind):
 
             outputs = model(images_chexpert, images_imagenet, caps[:, :-1], cap_masks[:, :-1])
             # getting average bleu score of iteration
-            outputs_pred = torch.argmax(outputs, dim=2)
+            outputs_pred = torch.argmax(outputs, dim=2).cpu()
             all_outputs = outputs_pred.numpy()
-            modified_caps = caps[:,:-1]
+            modified_caps = caps[:,:-1].cpu()
             all_modified_caps = modified_caps.numpy()
             all_outputs_corrected = []
             for report in all_outputs:

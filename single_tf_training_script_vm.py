@@ -54,7 +54,7 @@ def make_config():
     config.batch_size = 64
     config.encoder_type = 1
     config.vocab_size = words.shape[0]
-    config.dir = '../mimic_features'
+    config.dir = '../mimic_features_double'
     config.__dict__["pre_embed"] = torch.from_numpy(words).to(config.device)
     return 
 
