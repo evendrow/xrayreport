@@ -65,7 +65,7 @@ def make_config():
 def make_and_load_model():
     global model
     global criterion
-    model, criterion = main(config)
+    model, criterion = main(config) 
     model = model.float()
     global device
     device = torch.device(config.device)
@@ -111,6 +111,7 @@ def make_and_load_model():
         optimizer.load_state_dict(checkpoint['optimizer'])
         lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
         config.start_epoch = checkpoint['epoch'] + 1
+        print("Loading Checkpoint...")
 
     print("Start Training..")
 

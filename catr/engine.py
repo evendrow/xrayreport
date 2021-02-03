@@ -34,14 +34,15 @@ def train_one_epoch(model, criterion, data_loader,
         for images, caps, cap_masks in data_loader:
             iteration_number += 1
             # samples = utils.NestedTensor(images, masks).to(device)
+            images = images.to(device)
             caps = caps.to(device)
             cap_masks = cap_masks.to(device)
 
             outputs = model(images, caps[:, :-1], cap_masks[:, :-1])
             if iteration_number <= bleu_score_iteration_cutoff:
-                outputs_pred = torch.argmax(outputs, dim=2)
+                outputs_pred = torch.argmax(outputs, dim=2).cpu()
                 all_outputs = outputs_pred.numpy()
-                modified_caps = caps[:,:-1]
+                modified_caps = caps[:,:-1].cpu()
                 all_modified_caps = modified_caps.numpy()
                 all_outputs_corrected = []
                 for report in all_outputs:
@@ -86,13 +87,14 @@ def evaluate(model, criterion, data_loader, device, word2ind):
     with tqdm.tqdm(total=total) as pbar:
         for images, caps, cap_masks in data_loader:
             # samples = utils.NestedTensor(images, masks).to(device)
+            images = images.to(device)
             caps = caps.to(device)
             cap_masks = cap_masks.to(device)
 
             outputs = model(images, caps[:, :-1], cap_masks[:, :-1])
-            outputs_pred = torch.argmax(outputs, dim=2)
+            outputs_pred = torch.argmax(outputs, dim=2).cpu()
             all_outputs = outputs_pred.numpy()
-            modified_caps = caps[:,:-1]
+            modified_caps = caps[:,:-1].cpu()
             all_modified_caps = modified_caps.numpy()
             all_outputs_corrected = []
             for report in all_outputs:
