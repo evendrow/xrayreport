@@ -95,8 +95,8 @@ def evaluate_double_encoder(model, criterion, data_loader, device, word2ind):
             caps = caps.to(device)
             cap_masks = cap_masks.to(device)
             
-            images_chexpert = image_features[0]
-            images_imagenet = image_features[1]
+            images_chexpert = image_features[0].to(device)
+            images_imagenet = image_features[1].to(device)
 
             outputs = model(images_chexpert, images_imagenet, caps[:, :-1], cap_masks[:, :-1])
             # getting average bleu score of iteration
